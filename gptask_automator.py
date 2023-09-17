@@ -1,4 +1,5 @@
 import openai
+import argparse
 import configparser
 
 # Settings variables
@@ -23,7 +24,7 @@ def load_settings():
     global MAX_FIXING_ATTEMPTS
     MAX_FIXING_ATTEMPTS = int(config.get(section, 'max_fixing_attempts'))
 
-def generate_python_code(prompt) -> str:
+def generate_python_code(prompt: str) -> str:
     openai.api_key = API_KEY
 
     response = openai.Completion.create(
@@ -40,12 +41,22 @@ def colored_string(string: str, color_code: str) -> str:
     return f'{color_code}{string}\033[0m'
 
 def main():
+    parser = argparse.ArgumentParser(description="Generate and execute Python code to solve your tasks using GPT model API.")
+    parser.add_argument("--task", help="Specify the action you want to perform", default="")
+    args = parser.parse_args()
 
     # Read configs from the config.ini file
     load_settings()
 
     # Get action to perform
-    action = input("Specify the action you want to perform: ")
+    if args.task is not None and len(str(args.task)) > 0:
+        action = args.task
+    else:
+        action = input("Specify the action you want to perform: ")
+
+    # Terminate the program if not action is provided
+    if len(action) <= 0:
+        return
 
     # Generate Python code using GPT API
     python_code = generate_python_code(f"Generate Python code to {action}")
@@ -58,7 +69,7 @@ def main():
     '''
     try:
         exec(python_code)
-        print('\nTask Done.')
+        print('Task Done.')
 
     except Exception as e:
 
@@ -81,7 +92,7 @@ def main():
             print('------------------------------\nExecuting...')
             try:
                 exec(python_code)
-                print('\nTask Done.')
+                print('Task Done.')
             except Exception as e:
                 if counter < MAX_FIXING_ATTEMPTS:
                     error_str: str = str(e)
